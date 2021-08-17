@@ -132,13 +132,13 @@ func BuildServer() error {
 	dir := baseDir
 
 	builds := []DockerImage{
-		{RelativePath: "server", Name: "akita-poker-server", Tag: gitCommit()},
+		{RelativePath: "server", Name: "ghcr.io/rallinator7/akita-poker-server", Tag: gitCommit()},
 	}
 
 	for _, build := range builds {
 		os.Chdir(filepath.Join(dir, build.RelativePath))
 
-		err := sh.RunWithV(env, "go", "build", "-o", build.Name)
+		err := sh.RunWithV(env, "go", "build", "-o", "akita-poker-server")
 		if err != nil {
 			return fmt.Errorf("could not build binary: %s", err)
 		}
@@ -162,7 +162,7 @@ func BuildClient() error {
 	dir := baseDir
 
 	builds := []DockerImage{
-		{RelativePath: "client", Name: "akita-poker-client", Tag: gitCommit()},
+		{RelativePath: "client", Name: "ghcr.io/rallinator7/akita-poker-client", Tag: gitCommit()},
 	}
 
 	for _, build := range builds {
