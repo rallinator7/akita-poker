@@ -17,6 +17,8 @@ var (
 	env = map[string]string{
 		"CGO_ENABLED": "0",
 	}
+	owner   = "rallinator7"
+	baseDir = getMageDir()
 )
 
 func gitCommit() string {
@@ -28,22 +30,39 @@ func gitCommit() string {
 	return s
 }
 
-func getMageDir() (string, error) {
+func getMageDir() string {
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("could not read directory: %s", err)
+		return ""
 	}
 
-	return dir, nil
+	return dir
+}
+
+func TestServer() error {
+	os.Chdir(filepath.Join(baseDir, "server"))
+
+	files, err := ioutil.ReadDir("./")
+	if err != nil {
+		return fmt.Errorf("%s", err)
+	}
+
+	for _, f := range files {
+		if f.IsDir() {
+			err := sh.Run("go", "test", "./"+f.Name())
+			if err != nil {
+				return fmt.Errorf("server failed testing: %s", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // places updated protofiles for client and server
 func Proto() error {
 	// get current dir mage is running in
-	dir, err := getMageDir()
-	if err != nil {
-		return fmt.Errorf("error getting mage dir: %s", err)
-	}
+	dir := baseDir
 
 	// point to proto file location
 	protoPath := filepath.Join(dir, "proto")
@@ -110,10 +129,7 @@ type DockerImage struct {
 // builds the akita-poker server image
 func BuildServer() error {
 	// get current dir mage is running in
-	dir, err := getMageDir()
-	if err != nil {
-		return fmt.Errorf("error getting mage dir: %s", err)
-	}
+	dir := baseDir
 
 	builds := []DockerImage{
 		{RelativePath: "server", Name: "akita-poker-server", Tag: gitCommit()},
@@ -126,7 +142,7 @@ func BuildServer() error {
 		if err != nil {
 			return fmt.Errorf("could not build binary: %s", err)
 		}
-		err = sh.Run("docker", "build", "-t", fmt.Sprintf("%s:%s", build.Name, build.Tag), ".")
+		err = sh.Run("docker", "build", "-t", fmt.Sprintf("%s:%s", build.Name, build.Tag), "-t", fmt.Sprintf("%s:%s", build.Name, "latest"), ".")
 		if err != nil {
 			return fmt.Errorf("could not build docker image: %s", err)
 		}
@@ -135,6 +151,91 @@ func BuildServer() error {
 		if err != nil {
 			return fmt.Errorf("could not remove binary: %s", err)
 		}
+	}
+
+	return nil
+}
+
+// builds the akita-poker client image
+func BuildClient() error {
+	// get current dir mage is running in
+	dir := baseDir
+
+	builds := []DockerImage{
+		{RelativePath: "client", Name: "akita-poker-client", Tag: gitCommit()},
+	}
+
+	for _, build := range builds {
+		os.Chdir(filepath.Join(dir, build.RelativePath))
+
+		err := sh.RunWithV(env, "npm", "i")
+		if err != nil {
+			return fmt.Errorf("could not install npm deps: %s", err)
+		}
+		err = sh.RunWithV(env, "npm", "run", "build")
+		if err != nil {
+			return fmt.Errorf("could not run npm build: %s", err)
+		}
+		err = sh.Run("docker", "build", "-t", fmt.Sprintf("%s:%s", build.Name, build.Tag), "-t", fmt.Sprintf("%s:%s", build.Name, "latest"), ".")
+		if err != nil {
+			return fmt.Errorf("could not build docker image: %s", err)
+		}
+	}
+
+	return nil
+}
+
+// builds both the client and the server
+func BuildAll() error {
+	err := BuildServer()
+	if err != nil {
+		return fmt.Errorf("could not build server: %s", err)
+	}
+
+	err = BuildClient()
+	if err != nil {
+		return fmt.Errorf("could not build client: %s", err)
+	}
+
+	return nil
+}
+
+func PushImages() error {
+	images := []string{"akita-poker-client", "akita-poker-server"}
+	commit := gitCommit()
+	for _, image := range images {
+		err := sh.Run("docker", "push", fmt.Sprintf("ghcr.io/%s/%s:%s", owner, image, commit))
+		if err != nil {
+			return fmt.Errorf("could not push docker image: %s", err)
+		}
+		err = sh.Run("docker", "push", fmt.Sprintf("ghcr.io/%s/%s:latest", owner, image))
+		if err != nil {
+			return fmt.Errorf("could not push docker image: %s", err)
+		}
+	}
+
+	return nil
+}
+
+func CI() error {
+	err := TestServer()
+	if err != nil {
+		return fmt.Errorf("failed testing server: %s", err)
+	}
+
+	err = BuildServer()
+	if err != nil {
+		return fmt.Errorf("could not build server: %s", err)
+	}
+
+	err = BuildClient()
+	if err != nil {
+		return fmt.Errorf("could not build client: %s", err)
+	}
+
+	err = PushImages()
+	if err != nil {
+		return fmt.Errorf("could not push images: %s", err)
 	}
 
 	return nil
