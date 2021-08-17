@@ -1,0 +1,25 @@
+syntax = "proto3";
+package grpc;
+
+option go_package = "server/hand";
+
+message Card {
+    int64 face = 1;
+    int64 suit = 2;
+}
+message Hand {
+    repeated Card cards = 1;
+}
+
+message CheckHandRequest{
+    Hand hand = 1;
+}
+
+message CheckHandResponse{
+    string name = 1;
+    Hand hand = 2;
+}
+
+service HandServer {
+    rpc CheckHand (CheckHandRequest) returns (CheckHandResponse){}
+}
