@@ -39,6 +39,7 @@ func getMageDir() string {
 	return dir
 }
 
+// tests the code for the server
 func TestServer() error {
 	os.Chdir(filepath.Join(baseDir, "server"))
 
@@ -200,6 +201,7 @@ func BuildAll() error {
 	return nil
 }
 
+// pushes images to GitHub
 func PushImages() error {
 	images := []string{"akita-poker-client", "akita-poker-server"}
 	commit := gitCommit()
@@ -217,6 +219,7 @@ func PushImages() error {
 	return nil
 }
 
+// ci run for GitHub Actions
 func CI() error {
 	err := TestServer()
 	if err != nil {
