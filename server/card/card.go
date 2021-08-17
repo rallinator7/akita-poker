@@ -3,8 +3,8 @@ package card
 // a playing card struct
 // should always have a suit and a value
 type Card struct {
-	Face Face
-	Suit Suit
+	Face Face `json:"face"`
+	Suit Suit `json:"suit"`
 }
 
 // takes a suit and a value and returns a card

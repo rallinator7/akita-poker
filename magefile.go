@@ -71,32 +71,32 @@ func Proto() error {
 	}
 
 	// create typescript proto
-	tsDir := filepath.Join(dir, "client")
-	err = os.Chdir(tsDir)
-	if err != nil {
-		return fmt.Errorf("could not change directory to client: %s", err)
-	}
+	// tsDir := filepath.Join(dir, "client")
+	// err = os.Chdir(tsDir)
+	// if err != nil {
+	// 	return fmt.Errorf("could not change directory to client: %s", err)
+	// }
 
-	tsProtoPath := filepath.Join(tsDir, "src", "proto")
+	// tsProtoPath := filepath.Join(tsDir, "src", "proto")
 
-	err = os.Mkdir(tsProtoPath, 0755)
-	if err != nil {
-		fmt.Println("proto folder already exists! Continuing...")
-	}
+	// err = os.Mkdir(tsProtoPath, 0755)
+	// if err != nil {
+	// 	fmt.Println("proto folder already exists! Continuing...")
+	// }
 
-	gentsPath := filepath.Join(tsDir, "node_modules", ".bin", "protoc-gen-ts")
+	// gentsPath := filepath.Join(tsDir, "node_modules", ".bin", "protoc-gen-ts")
 
-	err = sh.Run("npx", "grpc_tools_node_protoc", "--js_out=import_style=commonjs,binary:"+tsProtoPath,
-		"--grpc_out="+tsProtoPath, "--plugin=protoc-gen-grpc="+gentsPath, "--proto_path="+protoPath, filepath.Join(protoPath, "hand.proto"))
-	if err != nil {
-		return fmt.Errorf("could not create ts proto files: %s", err)
-	}
+	// err = sh.Run("npx", "grpc_tools_node_protoc", "--js_out=import_style=commonjs,binary:"+tsProtoPath,
+	// 	"--grpc_out="+tsProtoPath, "--plugin=protoc-gen-grpc="+gentsPath, "--proto_path="+protoPath, filepath.Join(protoPath, "hand.proto"))
+	// if err != nil {
+	// 	return fmt.Errorf("could not create ts proto files: %s", err)
+	// }
 
-	err = sh.Run("npx", "grpc_tools_node_protoc", "--plugin=protoc-gen-ts="+gentsPath,
-		"--ts_out="+tsProtoPath, "--proto_path="+protoPath, filepath.Join(protoPath, "hand.proto"))
-	if err != nil {
-		return fmt.Errorf("could not create ts proto files: %s", err)
-	}
+	// err = sh.Run("npx", "grpc_tools_node_protoc", "--plugin=protoc-gen-ts="+gentsPath,
+	// 	"--ts_out="+tsProtoPath, "--proto_path="+protoPath, filepath.Join(protoPath, "hand.proto"))
+	// if err != nil {
+	// 	return fmt.Errorf("could not create ts proto files: %s", err)
+	// }
 
 	return nil
 }
